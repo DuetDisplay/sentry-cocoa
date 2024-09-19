@@ -1,12 +1,13 @@
+import _SentryPrivate
 import Foundation
 
 public class TestClient: SentryClient {
     public override init?(options: Options) {
-        super.init(options: options, fileManager: try! TestFileManager(options: options), deleteOldEnvelopeItems: false, transportAdapter: TestTransportAdapter(transport: TestTransport(), options: options))
+        super.init(options: options, fileManager: try! TestFileManager(options: options), deleteOldEnvelopeItems: false, transportAdapter: TestTransportAdapter(transports: [TestTransport()], options: options))
     }
 
     public override init?(options: Options, fileManager: SentryFileManager, deleteOldEnvelopeItems: Bool) {
-        super.init(options: options, fileManager: fileManager, deleteOldEnvelopeItems: deleteOldEnvelopeItems, transportAdapter: TestTransportAdapter(transport: TestTransport(), options: options))
+        super.init(options: options, fileManager: fileManager, deleteOldEnvelopeItems: deleteOldEnvelopeItems, transportAdapter: TestTransportAdapter(transports: [TestTransport()], options: options))
     }
     
     public override init(options: Options, fileManager: SentryFileManager, deleteOldEnvelopeItems: Bool, transportAdapter: SentryTransportAdapter) {
@@ -124,6 +125,11 @@ public class TestClient: SentryClient {
     public var recordLostEvents = Invocations<(category: SentryDataCategory, reason: SentryDiscardReason)>()
     public override func recordLostEvent(_ category: SentryDataCategory, reason: SentryDiscardReason) {
         recordLostEvents.record((category, reason))
+    }
+    
+    public var recordLostEventsWithQauntity = Invocations<(category: SentryDataCategory, reason: SentryDiscardReason, quantity: UInt)>()
+    public override func recordLostEvent(_ category: SentryDataCategory, reason: SentryDiscardReason, quantity: UInt) {
+        recordLostEventsWithQauntity.record((category, reason, quantity))
     }
     
     public var flushInvocations = Invocations<TimeInterval>()

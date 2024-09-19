@@ -1,6 +1,6 @@
 #if os(iOS) || os(tvOS) || targetEnvironment(macCatalyst)
 
-import Sentry
+@testable import Sentry
 import SentryTestUtils
 import SentryTestUtilsDynamic
 import XCTest
@@ -15,7 +15,7 @@ class SentryUIViewControllerSwizzlingTests: XCTestCase {
         let binaryImageCache: SentryBinaryImageCache
         
         init() {
-            subClassFinder = TestSubClassFinder(dispatchQueue: dispatchQueue, objcRuntimeWrapper: objcRuntimeWrapper)
+            subClassFinder = TestSubClassFinder(dispatchQueue: dispatchQueue, objcRuntimeWrapper: objcRuntimeWrapper, swizzleClassNameExcludes: [])
             binaryImageCache = SentryDependencyContainer.sharedInstance().binaryImageCache
         }
          
@@ -151,7 +151,7 @@ class SentryUIViewControllerSwizzlingTests: XCTestCase {
         // UIScene is available from iOS 13 and above.
         if #available(iOS 13.0, tvOS 13.0, macCatalyst 13.0, *) {
             XCTAssertEqual(swizzler.viewControllers.count, 1)
-            XCTAssertTrue(swizzler.viewControllers[0] is TestViewController)
+            XCTAssertTrue(try XCTUnwrap(swizzler.viewControllers.first) is TestViewController)
         } else {
             XCTAssertEqual(swizzler.viewControllers.count, 0)
         }

@@ -1,6 +1,6 @@
+import _SentryPrivate
 import Foundation
 
-@objc
 public class TestTransport: NSObject, Transport {
     
     public var sentEnvelopes = Invocations<SentryEnvelope>()
@@ -11,6 +11,11 @@ public class TestTransport: NSObject, Transport {
     public var recordLostEvents = Invocations<(category: SentryDataCategory, reason: SentryDiscardReason)>()
     public func recordLostEvent(_ category: SentryDataCategory, reason: SentryDiscardReason) {
         recordLostEvents.record((category, reason))
+    }
+    
+    public var recordLostEventsWithCount = Invocations<(category: SentryDataCategory, reason: SentryDiscardReason, quantity: UInt)>()
+    public func recordLostEvent(_ category: SentryDataCategory, reason: SentryDiscardReason, quantity: UInt) {
+        recordLostEventsWithCount.record((category, reason, quantity))
     }
     
     public var flushInvocations = Invocations<TimeInterval>()

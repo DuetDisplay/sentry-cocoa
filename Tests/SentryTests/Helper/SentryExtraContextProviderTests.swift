@@ -36,7 +36,6 @@ final class SentryExtraContextProviderTests: XCTestCase {
         let sut = fixture.getSut()
         fixture.crashWrapper.internalFreeMemorySize = 123_456
         fixture.crashWrapper.internalAppMemorySize = 234_567
-        fixture.crashWrapper.internalFreeStorageSize = 345_678
         
         let actualContext = sut.getExtraContext()
         let device = actualContext["device"] as? [String: Any]
@@ -44,10 +43,9 @@ final class SentryExtraContextProviderTests: XCTestCase {
         
         XCTAssertEqual(device?["free_memory"] as? UInt64, fixture.crashWrapper.internalFreeMemorySize)
         XCTAssertEqual(app?["app_memory"] as? UInt64, fixture.crashWrapper.internalAppMemorySize)
-        XCTAssertEqual(device?["free_storage"] as? UInt64, fixture.crashWrapper.internalFreeStorageSize)
     }
     
-    func testExtraDeviceInfo() {
+    func testExtraDeviceInfo() throws {
 #if os(iOS) || targetEnvironment(macCatalyst)
         let sut = fixture.getSut()
         fixture.deviceWrapper.internalOrientation = .landscapeLeft
@@ -58,19 +56,21 @@ final class SentryExtraContextProviderTests: XCTestCase {
         let device = actualContext["device"] as? [String: Any]
         
         XCTAssertEqual(device?["orientation"] as? String, "landscape")
-        XCTAssertEqual(device?["charging"] as? Bool, false)
+        XCTAssertFalse(try XCTUnwrap(device?["charging"] as? Bool))
         XCTAssertEqual(device?["battery_level"] as? UInt, 44)
 #endif // os(iOS) || targetEnvironment(macCatalyst)
     }
     
-    func testExtraProcessInfo() {
+    func testExtraProcessInfo() throws {
         let sut = fixture.getSut()
         fixture.processWrapper.overrides.processorCount = 12
-        
+        fixture.processWrapper.overrides.thermalState = .critical
+
         let actualContext = sut.getExtraContext()
-        let device = actualContext["device"] as? [String: Any]
-        
-        XCTAssertEqual(device?["processor_count"] as? UInt, fixture.processWrapper.overrides.processorCount)
+        let device = try XCTUnwrap(actualContext["device"] as? [String: Any])
+
+        XCTAssertEqual(try XCTUnwrap(device["processor_count"] as? UInt), fixture.processWrapper.overrides.processorCount)
+        XCTAssertEqual(try XCTUnwrap(device["thermal_state"] as? String), "critical")
     }
 
 }

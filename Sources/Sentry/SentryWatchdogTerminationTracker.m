@@ -1,4 +1,4 @@
-#import "NSDate+SentryExtras.h"
+#import "SentryDateUtils.h"
 #import "SentryEvent+Private.h"
 #import "SentryFileManager.h"
 #import <Foundation/Foundation.h>
@@ -16,8 +16,7 @@
 #import <SentryWatchdogTerminationLogic.h>
 #import <SentryWatchdogTerminationTracker.h>
 
-@interface
-SentryWatchdogTerminationTracker ()
+@interface SentryWatchdogTerminationTracker ()
 
 @property (nonatomic, strong) SentryOptions *options;
 @property (nonatomic, strong) SentryWatchdogTerminationLogic *watchdogTerminationLogic;
@@ -68,7 +67,7 @@ SentryWatchdogTerminationTracker ()
             NSDictionary *lastBreadcrumb = event.serializedBreadcrumbs.lastObject;
             if (lastBreadcrumb && [lastBreadcrumb objectForKey:@"timestamp"]) {
                 NSString *timestampIso8601String = [lastBreadcrumb objectForKey:@"timestamp"];
-                event.timestamp = [NSDate sentry_fromIso8601String:timestampIso8601String];
+                event.timestamp = sentry_fromIso8601String(timestampIso8601String);
             }
 
             SentryException *exception =

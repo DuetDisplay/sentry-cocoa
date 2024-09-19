@@ -1,4 +1,5 @@
 #import "SentryBooleanSerialization.h"
+#import "SentrySerializable.h"
 #import <XCTest/XCTest.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -18,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 {
     NSString *selectorString =
         [NSString stringWithFormat:@"set%@%@:", [[property substringToIndex:1] uppercaseString],
-                  [property substringFromIndex:1]];
+            [property substringFromIndex:1]];
     SEL selector = NSSelectorFromString(selectorString);
     NSAssert([serializable respondsToSelector:selector], @"Object doesn't have a property '%@'",
         property);

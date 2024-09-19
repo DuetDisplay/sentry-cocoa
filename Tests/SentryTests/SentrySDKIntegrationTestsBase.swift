@@ -1,4 +1,5 @@
 import Foundation
+@testable import Sentry
 import SentryTestUtils
 import XCTest
 
@@ -25,7 +26,7 @@ class SentrySDKIntegrationTestsBase: XCTestCase {
     
     func givenSdkWithHub(_ options: Options? = nil, scope: Scope = Scope()) {
         let client = TestClient(options: options ?? self.options)
-        let hub = SentryHub(client: client, andScope: scope, andCrashWrapper: TestSentryCrashWrapper.sharedInstance())
+        let hub = SentryHub(client: client, andScope: scope, andCrashWrapper: TestSentryCrashWrapper.sharedInstance(), andDispatchQueue: SentryDispatchQueueWrapper())
         
         SentrySDK.setCurrentHub(hub)
     }
@@ -51,7 +52,7 @@ class SentrySDKIntegrationTestsBase: XCTestCase {
         callback(client.captureEventInvocations.first)
     }
     
-    func assertEventWithScopeCaptured(_ callback: (Event?, Scope?, [SentryEnvelopeItem]?) -> Void) {
+    func assertEventWithScopeCaptured(_ callback: (Event?, Scope?, [SentryEnvelopeItem]?) throws -> Void) throws {
         guard let client = SentrySDK.currentHub().getClient() as? TestClient else {
             XCTFail("Hub Client is not a `TestClient`")
             return
@@ -59,7 +60,7 @@ class SentrySDKIntegrationTestsBase: XCTestCase {
         
         XCTAssertEqual(1, client.captureEventWithScopeInvocations.count, "More than one `Event` captured.")
         let capture = client.captureEventWithScopeInvocations.first
-        callback(capture?.event, capture?.scope, capture?.additionalEnvelopeItems)
+        try callback(capture?.event, capture?.scope, capture?.additionalEnvelopeItems)
     }
     
     func lastErrorWithScopeCaptured(_ callback: (Error?, Scope?) -> Void) {

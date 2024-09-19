@@ -1,4 +1,8 @@
-#import "SentrySerializable.h"
+#if __has_include(<Sentry/Sentry.h>)
+#    import <Sentry/SentrySerializable.h>
+#else
+#    import <SentryWithoutUIKit/SentrySerializable.h>
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -6,6 +10,10 @@ NS_ASSUME_NONNULL_BEGIN
 SENTRY_NO_INIT
 
 - (instancetype)initWithType:(NSString *)type length:(NSUInteger)length NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)initWithType:(NSString *)type
+                      length:(NSUInteger)length
+                 contentType:(NSString *)contentType;
 
 - (instancetype)initWithType:(NSString *)type
                       length:(NSUInteger)length

@@ -6,57 +6,34 @@ let package = Package(
     platforms: [.iOS(.v11), .macOS(.v10_13), .tvOS(.v11), .watchOS(.v4)],
     products: [
         .library(name: "Sentry", targets: ["Sentry"]),
-        .library(name: "Sentry-Dynamic", type: .dynamic, targets: ["Sentry"]),
-        .library(name: "SentrySwiftUI", targets: ["SentrySwiftUI"])
+        .library(name: "Sentry-Dynamic", targets: ["Sentry-Dynamic"]),
+        .library(name: "SentrySwiftUI", targets: ["Sentry", "SentrySwiftUI"])
     ],
     targets: [
-        .target(
-            name: "Sentry",
-            dependencies: ["SentryPrivate"],
-            path: "Sources",
-            sources: [
-                "Sentry/",
-                "SentryCrash/"
-            ],
-            publicHeadersPath: "Sentry/Public/",
-            cxxSettings: [
-                .define("GCC_ENABLE_CPP_EXCEPTIONS", to: "YES"),
-                .headerSearchPath("Sentry/include"),
-                .headerSearchPath("Sentry/include/HybridPublic"),
-                .headerSearchPath("Sentry/Public"),
-                .headerSearchPath("SentryCrash/Installations"),
-                .headerSearchPath("SentryCrash/Recording"),
-                .headerSearchPath("SentryCrash/Recording/Monitors"),
-                .headerSearchPath("SentryCrash/Recording/Tools"),
-                .headerSearchPath("SentryCrash/Reporting/Filters"),
-                .headerSearchPath("SentryCrash/Reporting/Filters/Tools"),
-                .headerSearchPath("SentryCrash/Reporting/Tools")
-            ]
-        ),
-        .target( name: "SentryPrivate",
-                 path: "Sources",
-                 sources: [
-                    "Swift"
-                 ],
-                 resources: [
-                    .copy("Resources/PrivacyInfo.xcprivacy")
-                 ]
-               ),
+        .binaryTarget(
+                    name: "Sentry",
+                    url: "https://github.com/getsentry/sentry-cocoa/releases/download/8.36.0/Sentry.xcframework.zip",
+                    checksum: "ca2140c6ef4986cd4f4436b23b3bd3cbe582a450fb62a9410efd3085f90be4c5" //Sentry-Static
+                ),
+        .binaryTarget(
+                    name: "Sentry-Dynamic",
+                    url: "https://github.com/getsentry/sentry-cocoa/releases/download/8.36.0/Sentry-Dynamic.xcframework.zip",
+                    checksum: "1990ea055eb3cd1779ef2a63f28ef23039999fc0fcef7d678e1d66bfc52de7e7" //Sentry-Dynamic
+                ),
         .target ( name: "SentrySwiftUI",
                   dependencies: ["Sentry", "SentryInternal"],
-                  path: "Sources",
-                  exclude: ["SentrySwiftUI/SentryInternal/"],
-                  sources: [
-                    "SentrySwiftUI"
+                  path: "Sources/SentrySwiftUI",
+                  exclude: ["SentryInternal/", "module.modulemap"],
+                  linkerSettings: [
+                     .linkedFramework("Sentry")
                   ]
                 ),
-        //SentryInternal is how we expose some internal Sentry SDK classes to SentrySwiftUI.
         .target( name: "SentryInternal",
-                 path: "Sources",
+                 path: "Sources/SentrySwiftUI",
                  sources: [
-                    "SentrySwiftUI/SentryInternal/"
+                    "SentryInternal/"
                  ],
-                 publicHeadersPath: "SentrySwiftUI/SentryInternal/"
+                 publicHeadersPath: "SentryInternal/"
                )
     ],
     cxxLanguageStandard: .cxx14

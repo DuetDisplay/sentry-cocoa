@@ -88,6 +88,11 @@ dispatch_queue_t queue;
 
 + (NSString *)stopBenchmark
 {
+    if (source == NULL) {
+        printf("[Sentry Benchmark] no benchmark in progress.\n");
+        return nil;
+    }
+
     dispatch_cancel(source);
 
     [samples addObject:cpuInfoByThread()];
@@ -143,7 +148,7 @@ dispatch_queue_t queue;
         = ((NSNumber *)[userTimeTotals.allValues valueForKeyPath:@"@sum.self"]).integerValue;
 
     return [NSString stringWithFormat:@"%ld,%ld,%ld,%ld", profilerSystemTime, profilerUserTime,
-                     appSystemTime, appUserTime];
+        appSystemTime, appUserTime];
 }
 
 @end

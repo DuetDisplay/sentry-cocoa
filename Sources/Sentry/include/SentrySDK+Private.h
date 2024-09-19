@@ -1,11 +1,20 @@
-#import "SentrySDK.h"
+#if __has_include(<Sentry/SentryOptions.h>)
+#    import <Sentry/SentryProfilingConditionals.h>
+#else
+#    import "SentryProfilingConditionals.h"
+#endif
+
+#if __has_include(<Sentry/SentryOptions.h>)
+#    import <Sentry/SentrySDK.h>
+#else
+#    import "SentrySDK.h"
+#endif
 
 @class SentryHub, SentryId, SentryAppStartMeasurement, SentryEnvelope;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface
-SentrySDK ()
+@interface SentrySDK ()
 
 + (void)captureCrashEvent:(SentryEvent *)event;
 
@@ -16,6 +25,8 @@ SentrySDK ()
  */
 @property (nonatomic, class) BOOL crashedLastRunCalled;
 
++ (void)setDetectedStartUpCrash:(BOOL)value;
+
 + (void)setAppStartMeasurement:(nullable SentryAppStartMeasurement *)appStartMeasurement;
 
 + (nullable SentryAppStartMeasurement *)getAppStartMeasurement;
@@ -25,6 +36,9 @@ SentrySDK ()
 
 + (SentryHub *)currentHub;
 
+/**
+ * The option used to start the SDK
+ */
 @property (nonatomic, nullable, readonly, class) SentryOptions *options;
 
 /**

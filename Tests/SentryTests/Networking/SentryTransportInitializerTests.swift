@@ -17,9 +17,11 @@ class SentryTransportInitializerTests: XCTestCase {
 
     func testDefault() throws {
         let options = try Options(dict: ["dsn": SentryTransportInitializerTests.dsnAsString])
+    
+        let result = TransportInitializer.initTransports(options, sentryFileManager: fileManager, currentDateProvider: TestCurrentDateProvider())
+        XCTAssertEqual(result.count, 1)
         
-        let result = TransportInitializer.initTransport(options, sentryFileManager: fileManager)
-        
-        XCTAssertTrue(result.isKind(of: SentryHttpTransport.self))
+        let firstTransport = result.first
+        XCTAssertEqual(firstTransport?.isKind(of: SentryHttpTransport.self), true)
     }
 }

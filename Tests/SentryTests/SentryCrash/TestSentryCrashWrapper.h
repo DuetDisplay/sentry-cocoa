@@ -31,11 +31,11 @@ SENTRY_NO_INIT
 
 @property (nonatomic, assign) uint64_t internalAppMemorySize;
 
-@property (nonatomic, assign) uint64_t internalFreeStorageSize;
-
 @property (nonatomic) BOOL binaryCacheStarted;
 
 @property (nonatomic) BOOL binaryCacheStopped;
+
+@property (nonatomic) BOOL enrichScopeCalled;
 
 @end
 

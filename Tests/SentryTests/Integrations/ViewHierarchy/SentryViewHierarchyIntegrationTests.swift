@@ -1,6 +1,5 @@
 #if os(iOS) || os(tvOS) || targetEnvironment(macCatalyst)
 
-import Nimble
 import Sentry
 import SentryTestUtils
 import XCTest
@@ -112,6 +111,27 @@ class SentryViewHierarchyIntegrationTests: XCTestCase {
         XCTAssertEqual(newAttachmentList?.count, 0)
     }
 #endif // os(iOS) || targetEnvironment(macCatalyst)
+    
+    func test_noViewHierarchy_WhenDiscardedInCallback() {
+        let sut = fixture.getSut()
+
+        let expectation = expectation(description: "BeforeCaptureViewHierarchy must be called.")
+
+        let options = Options()
+        options.attachViewHierarchy = true
+        options.beforeCaptureViewHierarchy = { _ in
+            expectation.fulfill()
+            return false
+        }
+
+        sut.install(with: options)
+
+        let newAttachmentList = sut.processAttachments([], for: Event(error: NSError(domain: "", code: -1)))
+
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertEqual(newAttachmentList?.count, 0)
+    }
 
     func test_noViewHierarchy_keepAttachment() {
         let sut = fixture.getSut()
@@ -136,16 +156,33 @@ class SentryViewHierarchyIntegrationTests: XCTestCase {
         let ex = expectation(description: "Attachment Added")
         
         testVH.processViewHierarchyCallback = {
-            ex.fulfill()
-            expect(Thread.isMainThread) == false
+            XCTFail("Should not add view hierarchy to app hanging events")
         }
         
         let dispatch = DispatchQueue(label: "background")
         dispatch.async {
             sut.processAttachments([], for: event)
+            ex.fulfill()
         }
         
         wait(for: [ex], timeout: 1)
+    }
+    
+    func testReportAccessibilityIdentifierTrue() {
+        SentrySDK.start {
+            $0.attachViewHierarchy = true
+            $0.setIntegrations([SentryViewHierarchyIntegration.self])
+        }
+        XCTAssertTrue(SentryDependencyContainer.sharedInstance().viewHierarchy.reportAccessibilityIdentifier)
+    }
+    
+    func testReportAccessibilityIdentifierFalse() {
+        SentrySDK.start {
+            $0.attachViewHierarchy = true
+            $0.reportAccessibilityIdentifier = false
+            $0.setIntegrations([SentryViewHierarchyIntegration.self])
+        }
+        XCTAssertFalse(SentryDependencyContainer.sharedInstance().viewHierarchy.reportAccessibilityIdentifier)
     }
 }
 

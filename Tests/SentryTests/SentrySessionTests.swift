@@ -33,7 +33,7 @@ class SentrySessionTestsSwift: XCTestCase {
         json.removeValue(forKey: "duration")
         
         let date = currentDateProvider.date().addingTimeInterval(2)
-        json["timestamp"] = (date as NSDate).sentry_toIso8601String()
+        json["timestamp"] = sentry_toIso8601String(date as Date)
         guard let session = SentrySession(jsonObject: json) else {
             XCTFail("Couldn't create session from JSON"); return
         }
@@ -43,13 +43,13 @@ class SentrySessionTestsSwift: XCTestCase {
         XCTAssertEqual(2, duration)
     }
 
-    func testCopySession() {
+    func testCopySession() throws {
         let user = User()
         user.email = "someone@sentry.io"
 
         let session = SentrySession(releaseName: "1.0.0", distinctId: "some-id")
         session.user = user
-        let copiedSession = session.copy() as! SentrySession
+        let copiedSession = try XCTUnwrap(session.copy() as? SentrySession)
 
         XCTAssertEqual(session, copiedSession)
 

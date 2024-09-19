@@ -10,13 +10,18 @@
 @class SentrySession;
 @class SentryTracer;
 @class SentryTracerConfiguration;
+@class SentryReplayEvent;
+@class SentryReplayRecording;
+@protocol SentryIntegrationProtocol;
+@protocol SentrySessionListener;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface
-SentryHub ()
+@interface SentryHub ()
 
 @property (nullable, nonatomic, strong) SentrySession *session;
+
+@property (nonatomic, strong) NSMutableArray<id<SentryIntegrationProtocol>> *installedIntegrations;
 
 /**
  * Every integration starts with "Sentry" and ends with "Integration". To keep the payload of the
@@ -33,6 +38,10 @@ SentryHub ()
 
 - (void)captureCrashEvent:(SentryEvent *)event withScope:(SentryScope *)scope;
 
+- (void)captureReplayEvent:(SentryReplayEvent *)replayEvent
+           replayRecording:(SentryReplayRecording *)replayRecording
+                     video:(NSURL *)videoURL;
+
 - (void)closeCachedSessionWithTimestamp:(NSDate *_Nullable)timestamp;
 
 - (SentryTracer *)startTransactionWithContext:(SentryTransactionContext *)transactionContext
@@ -45,13 +54,18 @@ SentryHub ()
     additionalEnvelopeItems:(NSArray<SentryEnvelopeItem *> *)additionalEnvelopeItems
     NS_SWIFT_NAME(capture(event:scope:additionalEnvelopeItems:));
 
-- (SentryId *)captureTransaction:(SentryTransaction *)transaction withScope:(SentryScope *)scope;
+- (void)captureTransaction:(SentryTransaction *)transaction withScope:(SentryScope *)scope;
 
-- (SentryId *)captureTransaction:(SentryTransaction *)transaction
-                       withScope:(SentryScope *)scope
-         additionalEnvelopeItems:(NSArray<SentryEnvelopeItem *> *)additionalEnvelopeItems;
+- (void)captureTransaction:(SentryTransaction *)transaction
+                  withScope:(SentryScope *)scope
+    additionalEnvelopeItems:(NSArray<SentryEnvelopeItem *> *)additionalEnvelopeItems;
 
+- (void)storeEnvelope:(SentryEnvelope *)envelope;
 - (void)captureEnvelope:(SentryEnvelope *)envelope;
+
+- (void)registerSessionListener:(id<SentrySessionListener>)listener;
+- (void)unregisterSessionListener:(id<SentrySessionListener>)listener;
+- (nullable id<SentryIntegrationProtocol>)getInstalledIntegration:(Class)integrationClass;
 
 @end
 

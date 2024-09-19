@@ -27,6 +27,12 @@ saveViewHierarchy(const char *reportDirectoryPath)
     [SentryDependencyContainer.sharedInstance.viewHierarchy saveViewHierarchy:reportPath];
 }
 
+@interface SentryViewHierarchyIntegration ()
+
+@property (nonatomic, strong) SentryOptions *options;
+
+@end
+
 @implementation SentryViewHierarchyIntegration
 
 - (BOOL)installWithOptions:(nonnull SentryOptions *)options
@@ -35,11 +41,15 @@ saveViewHierarchy(const char *reportDirectoryPath)
         return NO;
     }
 
+    self.options = options;
+
     SentryClient *client = [SentrySDK.currentHub getClient];
     [client addAttachmentProcessor:self];
 
     sentrycrash_setSaveViewHierarchy(&saveViewHierarchy);
 
+    SentryDependencyContainer.sharedInstance.viewHierarchy.reportAccessibilityIdentifier
+        = options.reportAccessibilityIdentifier;
     return YES;
 }
 
@@ -69,18 +79,21 @@ saveViewHierarchy(const char *reportDirectoryPath)
         return attachments;
     }
 
+    // If the event is an App hanging event, we cant take the
+    // view hierarchy because the main thread it's blocked.
+    if (event.isAppHangEvent) {
+        return attachments;
+    }
+
+    if (self.options.beforeCaptureViewHierarchy
+        && !self.options.beforeCaptureViewHierarchy(event)) {
+        return attachments;
+    }
+
     NSMutableArray<SentryAttachment *> *result = [NSMutableArray arrayWithArray:attachments];
 
-    NSData *viewHierarchy;
-
-    // If the event is an App hanging event, we cant take the
-    // view hierarchy in the main thread because it's blocked.
-    if (event.isAppHangEvent) {
-        viewHierarchy = [SentryDependencyContainer.sharedInstance.viewHierarchy appViewHierarchy];
-    } else {
-        viewHierarchy =
-            [SentryDependencyContainer.sharedInstance.viewHierarchy appViewHierarchyFromMainThread];
-    }
+    NSData *viewHierarchy =
+        [SentryDependencyContainer.sharedInstance.viewHierarchy appViewHierarchyFromMainThread];
 
     SentryAttachment *attachment =
         [[SentryAttachment alloc] initWithData:viewHierarchy

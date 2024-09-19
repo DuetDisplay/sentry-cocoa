@@ -1,8 +1,8 @@
-#import "NSDate+SentryExtras.h"
 #import "SentryBreadcrumb.h"
 #import "SentryBreadcrumbTracker.h"
 #import "SentryClient.h"
 #import "SentryDataCategory.h"
+#import "SentryDateUtils.h"
 #import "SentryEvent.h"
 #import "SentryHub.h"
 #import "SentryLevelMapper.h"
@@ -11,9 +11,9 @@
 #import "SentryOptions+HybridSDKs.h"
 #import "SentrySDK+Private.h"
 #import <XCTest/XCTest.h>
+@import Sentry;
 
-@interface
-SentryBreadcrumbTracker ()
+@interface SentryBreadcrumbTracker ()
 
 + (NSString *)sanitizeViewControllerName:(NSString *)controller;
 
@@ -111,26 +111,6 @@ SentryBreadcrumbTracker ()
     [SentrySDK captureError:error];
 }
 
-- (void)testLevelNames
-{
-    XCTAssertEqual(kSentryLevelNone, sentryLevelForString(kSentryLevelNameNone));
-    XCTAssertEqual(kSentryLevelDebug, sentryLevelForString(kSentryLevelNameDebug));
-    XCTAssertEqual(kSentryLevelInfo, sentryLevelForString(kSentryLevelNameInfo));
-    XCTAssertEqual(kSentryLevelWarning, sentryLevelForString(kSentryLevelNameWarning));
-    XCTAssertEqual(kSentryLevelError, sentryLevelForString(kSentryLevelNameError));
-    XCTAssertEqual(kSentryLevelFatal, sentryLevelForString(kSentryLevelNameFatal));
-
-    XCTAssertEqual(kSentryLevelError, sentryLevelForString(@"fdjsafdsa"),
-        @"Failed to map an unexpected string value to the default case.");
-
-    XCTAssertEqualObjects(kSentryLevelNameNone, nameForSentryLevel(kSentryLevelNone));
-    XCTAssertEqualObjects(kSentryLevelNameDebug, nameForSentryLevel(kSentryLevelDebug));
-    XCTAssertEqualObjects(kSentryLevelNameInfo, nameForSentryLevel(kSentryLevelInfo));
-    XCTAssertEqualObjects(kSentryLevelNameWarning, nameForSentryLevel(kSentryLevelWarning));
-    XCTAssertEqualObjects(kSentryLevelNameError, nameForSentryLevel(kSentryLevelError));
-    XCTAssertEqualObjects(kSentryLevelNameFatal, nameForSentryLevel(kSentryLevelFatal));
-}
-
 - (void)testLevelOrder
 {
     XCTAssertGreaterThan(kSentryLevelFatal, kSentryLevelError);
@@ -144,23 +124,22 @@ SentryBreadcrumbTracker ()
 {
     NSTimeInterval timeInterval = 1605888590.123;
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timeInterval];
-    XCTAssertEqual(
-        [[NSDate sentry_fromIso8601String:[date sentry_toIso8601String]] timeIntervalSince1970],
+    XCTAssertEqual([sentry_fromIso8601String(sentry_toIso8601String(date)) timeIntervalSince1970],
         timeInterval);
 }
 
 - (void)testDateCategoryPrecision
 {
     NSDate *date1 = [NSDate dateWithTimeIntervalSinceReferenceDate:0.1234];
-    XCTAssertEqualObjects([date1 sentry_toIso8601String], @"2001-01-01T00:00:00.123Z");
+    XCTAssertEqualObjects(sentry_toIso8601String(date1), @"2001-01-01T00:00:00.123Z");
 
     NSDate *date2 = [NSDate dateWithTimeIntervalSinceReferenceDate:0.9995];
-    XCTAssertEqualObjects([date2 sentry_toIso8601String], @"2001-01-01T00:00:01.000Z");
+    XCTAssertEqualObjects(sentry_toIso8601String(date2), @"2001-01-01T00:00:01.000Z");
 }
 
 - (void)testDateCategoryCompactibility
 {
-    NSDate *date = [NSDate sentry_fromIso8601String:@"2020-02-27T11:35:26Z"];
+    NSDate *date = sentry_fromIso8601String(@"2020-02-27T11:35:26Z");
     XCTAssertEqual([date timeIntervalSince1970], 1582803326.0);
 }
 

@@ -1,16 +1,15 @@
 #import "SentrySessionCrashedHandler.h"
 #import "SentryClient+Private.h"
 #import "SentryCrashWrapper.h"
-#import "SentryCurrentDateProvider.h"
 #import "SentryDependencyContainer.h"
 #import "SentryFileManager.h"
 #import "SentryHub.h"
 #import "SentrySDK+Private.h"
 #import "SentrySession.h"
+#import "SentrySwift.h"
 #import "SentryWatchdogTerminationLogic.h"
 
-@interface
-SentrySessionCrashedHandler ()
+@interface SentrySessionCrashedHandler ()
 
 @property (nonatomic, strong) SentryCrashWrapper *crashWrapper;
 #if SENTRY_HAS_UIKIT

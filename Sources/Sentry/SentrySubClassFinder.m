@@ -9,11 +9,11 @@
 #    import <UIKit/UIKit.h>
 #endif // SENTRY_HAS_UIKIT
 
-@interface
-SentrySubClassFinder ()
+@interface SentrySubClassFinder ()
 
 @property (nonatomic, strong) SentryDispatchQueueWrapper *dispatchQueue;
 @property (nonatomic, strong) id<SentryObjCRuntimeWrapper> objcRuntimeWrapper;
+@property (nonatomic, copy) NSSet<NSString *> *swizzleClassNameExcludes;
 
 @end
 
@@ -21,10 +21,12 @@ SentrySubClassFinder ()
 
 - (instancetype)initWithDispatchQueue:(SentryDispatchQueueWrapper *)dispatchQueue
                    objcRuntimeWrapper:(id<SentryObjCRuntimeWrapper>)objcRuntimeWrapper
+             swizzleClassNameExcludes:(NSSet<NSString *> *)swizzleClassNameExcludes
 {
     if (self = [super init]) {
         self.dispatchQueue = dispatchQueue;
         self.objcRuntimeWrapper = objcRuntimeWrapper;
+        self.swizzleClassNameExcludes = swizzleClassNameExcludes;
     }
     return self;
 }
@@ -58,6 +60,22 @@ SentrySubClassFinder ()
         NSMutableArray<NSString *> *classesToSwizzle = [NSMutableArray new];
         for (int i = 0; i < count; i++) {
             NSString *className = [NSString stringWithUTF8String:classes[i]];
+
+            BOOL shouldExcludeClassFromSwizzling = NO;
+            for (NSString *swizzleClassNameExclude in self.swizzleClassNameExcludes) {
+                if ([className containsString:swizzleClassNameExclude]) {
+                    shouldExcludeClassFromSwizzling = YES;
+                    break;
+                }
+            }
+
+            // It is vital to avoid calling NSClassFromString for the excluded classes because we
+            // had crashes for specific classes when calling NSClassFromString, such as
+            // https://github.com/getsentry/sentry-cocoa/issues/3798.
+            if (shouldExcludeClassFromSwizzling) {
+                continue;
+            }
+
             Class class = NSClassFromString(className);
             if ([self isClass:class subClassOf:viewControllerClass]) {
                 [classesToSwizzle addObject:className];
@@ -73,7 +91,7 @@ SentrySubClassFinder ()
             [SentryLog
                 logWithMessage:[NSString stringWithFormat:@"The following UIViewControllers will "
                                                           @"generate automatic transactions: %@",
-                                         [classesToSwizzle componentsJoinedByString:@", "]]
+                                   [classesToSwizzle componentsJoinedByString:@", "]]
                       andLevel:kSentryLevelDebug];
         }];
     }];

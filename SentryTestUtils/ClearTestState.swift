@@ -1,12 +1,8 @@
 import Foundation
-import Sentry
+@testable import Sentry
 
 public func clearTestState() {
     TestCleanup.clearTestState()
-}
-
-public func setTestDefaultLogLevel() {
-    SentryLog.configure(true, diagnosticLevel: .debug)
 }
 
 @objcMembers
@@ -20,10 +16,12 @@ class TestCleanup: NSObject {
         SentrySDK.setCurrentHub(nil)
         SentrySDK.crashedLastRunCalled = false
         SentrySDK.startInvocations = 0
+        SentrySDK.setDetectedStartUpCrash(false)
+        SentrySDK.setStart(nil)
         PrivateSentrySDKOnly.appStartMeasurementHybridSDKMode = false
         SentryNetworkTracker.sharedInstance.disable()
         
-        setTestDefaultLogLevel()
+        SentryLog.setTestDefaultLogLevel()
 
         #if os(iOS) || os(tvOS) || targetEnvironment(macCatalyst)
 
@@ -31,6 +29,7 @@ class TestCleanup: NSObject {
         SentryAppStartTracker.load()
         SentryUIViewControllerPerformanceTracker.shared.enableWaitForFullDisplay = false
         SentryDependencyContainer.sharedInstance().swizzleWrapper.removeAllCallbacks()
+        SentryDependencyContainer.sharedInstance().fileManager.clearDiskState()
         
         #endif // os(iOS) || os(tvOS) || targetEnvironment(macCatalyst)
         
@@ -41,8 +40,15 @@ class TestCleanup: NSObject {
         SentryTracer.resetAppStartMeasurementRead()
 
 #if os(iOS) || os(macOS) || targetEnvironment(macCatalyst)
-        SentryProfiler.getCurrent().stop(for: .normal)
-        SentryProfiler.resetConcurrencyTracking()
+        _sentry_threadUnsafe_traceProfileTimeoutTimer = nil
+        SentryTraceProfiler.getCurrentProfiler()?.stop(for: SentryProfilerTruncationReason.normal)
+        SentryTraceProfiler.resetConcurrencyTracking()
+        removeAppLaunchProfilingConfigFile()
+        sentry_stopAndDiscardLaunchProfileTracer()
+        
+        if SentryContinuousProfiler.isCurrentlyProfiling() {
+            SentryContinuousProfiler.stopTimerAndCleanup()
+        }
 #endif // os(iOS) || os(macOS) || targetEnvironment(macCatalyst)
 
         #if os(iOS) || os(tvOS) || targetEnvironment(macCatalyst)

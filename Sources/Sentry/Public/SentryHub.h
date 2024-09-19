@@ -1,9 +1,15 @@
-#import "SentryDefines.h"
-#import "SentryIntegrationProtocol.h"
-#import "SentrySpanProtocol.h"
+
+#if __has_include(<Sentry/Sentry.h>)
+#    import <Sentry/SentryDefines.h>
+#    import <Sentry/SentrySpanProtocol.h>
+#else
+#    import <SentryWithoutUIKit/SentryDefines.h>
+#    import <SentryWithoutUIKit/SentrySpanProtocol.h>
+#endif
 
 @class SentryEvent, SentryClient, SentryScope, SentryUser, SentryBreadcrumb, SentryId,
     SentryUserFeedback, SentryTransactionContext;
+@class SentryMetricsAPI;
 
 NS_ASSUME_NONNULL_BEGIN
 @interface SentryHub : NSObject
@@ -11,6 +17,8 @@ SENTRY_NO_INIT
 
 - (instancetype)initWithClient:(SentryClient *_Nullable)client
                       andScope:(SentryScope *_Nullable)scope;
+
+@property (nonatomic, readonly) SentryMetricsAPI *metrics;
 
 /**
  * Starts a new SentrySession. If there's a running SentrySession, it ends it before starting the

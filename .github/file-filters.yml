@@ -1,4 +1,4 @@
-# This is used by the action https://github.com/dorny/paths-filter (which we have forked to https://github.com/getsentry/paths-filter)
+# This is used by the action https://github.com/dorny/paths-filter
 
 high_risk_code: &high_risk_code
   - 'Sources/Sentry/SentryNSURLSessionTaskSearch.m'
@@ -10,3 +10,6 @@ high_risk_code: &high_risk_code
   - 'Sources/Sentry/SentrySwizzleWrapper.m'
   - 'Sources/Sentry/include/SentrySwizzle.h'
   - 'Sources/Sentry/SentrySwizzle.m'
+  - 'Sources/Sentry/SentryFileManager.m'
+  - 'Sources/Sentry/SentrySerialization.m'
+  - 'Sources/Sentry/SentrySerialization.h'

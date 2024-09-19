@@ -5,11 +5,11 @@
 #import <SentryAppState.h>
 #import <SentryAppStateManager.h>
 #import <SentryCrashWrapper.h>
-#import <SentryCurrentDateProvider.h>
 #import <SentryDispatchQueueWrapper.h>
 #import <SentryFileManager.h>
 #import <SentryNSNotificationCenterWrapper.h>
 #import <SentryOptions.h>
+#import <SentrySwift.h>
 
 #if SENTRY_HAS_UIKIT
 #    import <SentryInternalNotificationNames.h>
@@ -17,8 +17,7 @@
 #    import <UIKit/UIKit.h>
 #endif
 
-@interface
-SentryAppStateManager ()
+@interface SentryAppStateManager ()
 
 @property (nonatomic, strong) SentryOptions *options;
 @property (nonatomic, strong) SentryCrashWrapper *crashWrapper;

@@ -13,7 +13,7 @@ class SentryMechanismTests: XCTestCase {
         mechanism.meta = nil
 
         let expected = TestData.mechanism
-        XCTAssertEqual(expected.type, actual["type"] as! String)
+        XCTAssertEqual(expected.type, try XCTUnwrap(actual["type"] as? String))
         XCTAssertEqual(expected.desc, actual["description"] as? String)
         XCTAssertEqual(expected.handled, actual["handled"] as? NSNumber)
         XCTAssertEqual(expected.synthetic, actual["synthetic"] as? NSNumber)
@@ -25,8 +25,8 @@ class SentryMechanismTests: XCTestCase {
         }
 
         let currentDateProvider = TestCurrentDateProvider()
-        let date = currentDateProvider.date() as NSDate
-        XCTAssertEqual(date.sentry_toIso8601String(), something["date"] as? String)
+        let date = currentDateProvider.date()
+        XCTAssertEqual(sentry_toIso8601String(date), something["date"] as? String)
 
         XCTAssertNotNil(actual["meta"])
     }

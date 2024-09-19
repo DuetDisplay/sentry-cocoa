@@ -8,10 +8,10 @@
 #import "SentryPredicateDescriptor.h"
 #import "SentrySDK+Private.h"
 #import "SentryScope+Private.h"
-#import "SentrySpanProtocol.h"
-@import SentryPrivate;
 #import "SentrySpan.h"
+#import "SentrySpanProtocol.h"
 #import "SentryStacktrace.h"
+#import "SentrySwift.h"
 #import "SentryThreadInspector.h"
 #import "SentryTraceOrigins.h"
 
@@ -48,9 +48,6 @@
         SENTRY_LOG_DEBUG(@"SentryCoreDataTracker automatically started a new span with "
                          @"description: %@, operation: %@",
             fetchSpan.description, fetchSpan.operation);
-    } else {
-        SENTRY_LOG_ERROR(
-            @"managedObjectContext:executeFetchRequest:error:originalImp: fetchSpan is nil.");
     }
 
     NSArray *result = original(request, error);
@@ -148,10 +145,10 @@
         if (items && items.count > 0) {
             if (items.count == 1) {
                 [resultParts addObject:[NSString stringWithFormat:@"%@ %@ '%@'", op,
-                                                 items.allValues[0], items.allKeys[0]]];
+                                           items.allValues[0], items.allKeys[0]]];
             } else {
                 [resultParts addObject:[NSString stringWithFormat:@"%@ %lu items", op,
-                                                 (unsigned long)total]];
+                                           (unsigned long)total]];
             }
         }
     };
@@ -200,7 +197,7 @@
 
     if (request.predicate) {
         [result appendFormat:@" WHERE %@",
-                [predicateDescriptor predicateDescription:request.predicate]];
+            [predicateDescriptor predicateDescription:request.predicate]];
     }
 
     if (request.sortDescriptors.count > 0) {

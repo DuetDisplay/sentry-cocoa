@@ -1,5 +1,10 @@
-#import "SentrySampleDecision.h"
-#import "SentrySpanContext.h"
+#if __has_include(<Sentry/Sentry.h>)
+#    import <Sentry/SentrySampleDecision.h>
+#    import <Sentry/SentrySpanContext.h>
+#else
+#    import <SentryWithoutUIKit/SentrySampleDecision.h>
+#    import <SentryWithoutUIKit/SentrySpanContext.h>
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,6 +30,15 @@ SENTRY_NO_INIT
  * Sample rate used for this transaction
  */
 @property (nonatomic, strong, nullable) NSNumber *sampleRate;
+
+/**
+ * If app launch profiling is enabled via @c SentryOptions.enableAppLaunchProfiling and
+ * @c SentryOptions.tracesSampler and/or @c SentryOptions.profilesSampler are defined,
+ * @c SentrySDK.startWithOptions will call the sampler function with this property set to @c YES ,
+ * and the returned value will be stored to disk for the next launch to calculate a sampling
+ * decision on whether or not to run the profiler.
+ */
+@property (nonatomic, assign) BOOL forNextAppLaunch;
 
 /**
  * @param name Transaction name

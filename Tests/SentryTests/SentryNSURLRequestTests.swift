@@ -9,12 +9,25 @@ class SentryNSURLRequestTests: XCTestCase {
         try TestConstants.dsn(username: "SentryNSURLRequestTests")
     }
     
-    func testRequestWithEnvelopeEndpoint() {
-        let request = try! SentryNSURLRequest(envelopeRequestWith: SentryNSURLRequestTests.dsn(), andData: Data())
-        XCTAssertTrue(request.url!.absoluteString.hasSuffix("/envelope/"))
+    func testRequestWithEnvelopeEndpoint() throws {
+        let request = try SentryNSURLRequest(envelopeRequestWith: SentryNSURLRequestTests.dsn(), andData: Data())
+        let string = try XCTUnwrap(request.url?.absoluteString as? NSString)
+        XCTAssert(string.hasSuffix("/envelope/"))
     }
-    func testRequestWithStoreEndpoint() {
+    
+    func testRequestWithStoreEndpoint() throws {
         let request = try! SentryNSURLRequest(storeRequestWith: SentryNSURLRequestTests.dsn(), andData: Data())
-        XCTAssertTrue(request.url!.absoluteString.hasSuffix("/store/"))
+        let string = try XCTUnwrap(request.url?.absoluteString as? NSString)
+        XCTAssert(string.hasSuffix("/store/"))
+    }
+    
+    func testRequestWithEnvelopeEndpoint_hasUserAgentWithSdkNameAndVersion() {
+        let request = try! SentryNSURLRequest(envelopeRequestWith: SentryNSURLRequestTests.dsn(), andData: Data())
+        XCTAssertEqual(request.allHTTPHeaderFields?["User-Agent"], "\(SentryMeta.sdkName)/\(SentryMeta.versionString)")
+    }
+    
+    func testRequestWithStoreEndpoint_hasUserAgentWithSdkNameAndVersion() {
+        let request = try! SentryNSURLRequest(storeRequestWith: SentryNSURLRequestTests.dsn(), andData: Data())
+        XCTAssertEqual(request.allHTTPHeaderFields?["User-Agent"], "\(SentryMeta.sdkName)/\(SentryMeta.versionString)")
     }
 }

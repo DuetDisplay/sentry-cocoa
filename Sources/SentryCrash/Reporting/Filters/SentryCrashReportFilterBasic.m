@@ -26,12 +26,11 @@
 //
 
 #import "SentryCrashReportFilterBasic.h"
-#import "Container+SentryDeepSearch.h"
-#import "NSError+SentrySimpleConstructor.h"
+#import "SentryCrashNSErrorUtil.h"
 #import "SentryCrashVarArgs.h"
+#import "SentryDictionaryDeepSearch.h"
 
-// #define SentryCrashLogger_LocalLevel TRACE
-#import "SentryCrashLogger.h"
+#import "SentryLog.h"
 
 @implementation SentryCrashReportFilterPassthrough
 
@@ -48,8 +47,7 @@
 
 @end
 
-@interface
-SentryCrashReportFilterCombine ()
+@interface SentryCrashReportFilterCombine ()
 
 @property (nonatomic, readwrite, retain) NSArray *filters;
 @property (nonatomic, readwrite, retain) NSArray *keys;
@@ -78,7 +76,7 @@ SentryCrashReportFilterCombine ()
     SentryCrashVA_Block block = ^(id entry) {
         if (isKey) {
             if (entry == nil) {
-                SentryCrashLOG_ERROR(@"key entry was nil");
+                SENTRY_LOG_ERROR(@"key entry was nil");
             } else {
                 [keys addObject:entry];
             }
@@ -87,7 +85,7 @@ SentryCrashReportFilterCombine ()
                 entry = [SentryCrashReportFilterPipeline filterWithFilters:entry, nil];
             }
             if (![entry conformsToProtocol:@protocol(SentryCrashReportFilter)]) {
-                SentryCrashLOG_ERROR(@"Not a filter: %@", entry);
+                SENTRY_LOG_ERROR(@"Not a filter: %@", entry);
                 // Cause next key entry to fail as well.
                 return;
             } else {
@@ -130,10 +128,8 @@ SentryCrashReportFilterCombine ()
 
     if (filterCount != [keys count]) {
         sentrycrash_callCompletion(onCompletion, reports, NO,
-            [NSError sentryErrorWithDomain:[[self class] description]
-                                      code:0
-                               description:@"Key/filter mismatch (%d keys, %d filters",
-                               [keys count], filterCount]);
+            sentryErrorWithDomain([[self class] description], 0,
+                @"Key/filter mismatch (%d keys, %d filters", [keys count], filterCount));
         return;
     }
 
@@ -152,9 +148,8 @@ SentryCrashReportFilterCombine ()
                 sentrycrash_callCompletion(onCompletion, filteredReports, completed, filterError);
             } else if (filteredReports == nil) {
                 sentrycrash_callCompletion(onCompletion, filteredReports, NO,
-                    [NSError sentryErrorWithDomain:[[self class] description]
-                                              code:0
-                                       description:@"filteredReports was nil"]);
+                    sentryErrorWithDomain(
+                        [[self class] description], 0, @"filteredReports was nil"));
             }
             disposeOfCompletion();
             return;
@@ -196,8 +191,7 @@ SentryCrashReportFilterCombine ()
 
 @end
 
-@interface
-SentryCrashReportFilterPipeline ()
+@interface SentryCrashReportFilterPipeline ()
 
 @property (nonatomic, readwrite, retain) NSArray *filters;
 
@@ -265,9 +259,8 @@ SentryCrashReportFilterPipeline ()
                 sentrycrash_callCompletion(onCompletion, filteredReports, completed, filterError);
             } else if (filteredReports == nil) {
                 sentrycrash_callCompletion(onCompletion, filteredReports, NO,
-                    [NSError sentryErrorWithDomain:[[self class] description]
-                                              code:0
-                                       description:@"filteredReports was nil"]);
+                    sentryErrorWithDomain(
+                        [[self class] description], 0, @"filteredReports was nil"));
             }
             disposeOfCompletion();
             return;
@@ -294,8 +287,7 @@ SentryCrashReportFilterPipeline ()
 
 @end
 
-@interface
-SentryCrashReportFilterObjectForKey ()
+@interface SentryCrashReportFilterObjectForKey ()
 
 @property (nonatomic, readwrite, retain) id key;
 @property (nonatomic, readwrite, assign) BOOL allowNotFound;
@@ -328,16 +320,15 @@ SentryCrashReportFilterObjectForKey ()
     for (NSDictionary *report in reports) {
         id object = nil;
         if ([self.key isKindOfClass:[NSString class]]) {
-            object = [report sentry_objectForKeyPath:self.key];
+            object = sentry_objectForKeyPath(report, self.key);
         } else {
             object = [report objectForKey:self.key];
         }
         if (object == nil) {
             if (!self.allowNotFound) {
                 sentrycrash_callCompletion(onCompletion, filteredReports, NO,
-                    [NSError sentryErrorWithDomain:[[self class] description]
-                                              code:0
-                                       description:@"Key not found: %@", self.key]);
+                    sentryErrorWithDomain(
+                        [[self class] description], 0, @"Key not found: %@", self.key));
                 return;
             }
             [filteredReports addObject:[NSDictionary dictionary]];
@@ -350,8 +341,7 @@ SentryCrashReportFilterObjectForKey ()
 
 @end
 
-@interface
-SentryCrashReportFilterConcatenate ()
+@interface SentryCrashReportFilterConcatenate ()
 
 @property (nonatomic, readwrite, retain) NSString *separatorFmt;
 @property (nonatomic, readwrite, retain) NSArray *keys;
@@ -407,7 +397,7 @@ SentryCrashReportFilterConcatenate ()
             } else {
                 [concatenated appendFormat:self.separatorFmt, key];
             }
-            id object = [report sentry_objectForKeyPath:key];
+            id object = sentry_objectForKeyPath(report, key);
             [concatenated appendFormat:@"%@", object];
         }
         [filteredReports addObject:concatenated];
@@ -417,8 +407,7 @@ SentryCrashReportFilterConcatenate ()
 
 @end
 
-@interface
-SentryCrashReportFilterSubset ()
+@interface SentryCrashReportFilterSubset ()
 
 @property (nonatomic, readwrite, retain) NSArray *keyPaths;
 
@@ -464,12 +453,11 @@ SentryCrashReportFilterSubset ()
     for (NSDictionary *report in reports) {
         NSMutableDictionary *subset = [NSMutableDictionary dictionary];
         for (NSString *keyPath in self.keyPaths) {
-            id object = [report sentry_objectForKeyPath:keyPath];
+            id object = sentry_objectForKeyPath(report, keyPath);
             if (object == nil) {
                 sentrycrash_callCompletion(onCompletion, filteredReports, NO,
-                    [NSError sentryErrorWithDomain:[[self class] description]
-                                              code:0
-                                       description:@"Report did not have key path %@", keyPath]);
+                    sentryErrorWithDomain([[self class] description], 0,
+                        @"Report did not have key path %@", keyPath));
                 return;
             }
             [subset setObject:object forKey:[keyPath lastPathComponent]];
@@ -517,9 +505,8 @@ SentryCrashReportFilterSubset ()
         NSData *converted = [report dataUsingEncoding:NSUTF8StringEncoding];
         if (converted == nil) {
             sentrycrash_callCompletion(onCompletion, filteredReports, NO,
-                [NSError sentryErrorWithDomain:[[self class] description]
-                                          code:0
-                                   description:@"Could not convert report to UTF-8"]);
+                sentryErrorWithDomain(
+                    [[self class] description], 0, @"Could not convert report to UTF-8"));
             return;
         } else {
             [filteredReports addObject:converted];
