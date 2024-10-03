@@ -10,8 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface
-SentryDelayedFramesTracker ()
+@interface SentryDelayedFramesTracker ()
 
 @property (nonatomic, assign) CFTimeInterval keepDelayedFramesDuration;
 @property (nonatomic, strong, readonly) SentryCurrentDateProvider *dateProvider;
@@ -118,7 +117,8 @@ SentryDelayedFramesTracker ()
                          slowFrameThreshold:(CFTimeInterval)slowFrameThreshold
 {
     SentryFramesDelayResult *cantCalculateFrameDelayReturnValue =
-        [[SentryFramesDelayResult alloc] initWithDelayDuration:-1.0 framesCount:0];
+        [[SentryFramesDelayResult alloc] initWithDelayDuration:-1.0
+                                framesContributingToDelayCount:0];
 
     if (isRunning == NO) {
         SENTRY_LOG_DEBUG(@"Not calculating frames delay because frames tracker isn't running.");
@@ -207,7 +207,8 @@ SentryDelayedFramesTracker ()
     }
 
     SentryFramesDelayResult *data =
-        [[SentryFramesDelayResult alloc] initWithDelayDuration:delay framesCount:framesCount];
+        [[SentryFramesDelayResult alloc] initWithDelayDuration:delay
+                                framesContributingToDelayCount:framesCount];
 
     return data;
 }
