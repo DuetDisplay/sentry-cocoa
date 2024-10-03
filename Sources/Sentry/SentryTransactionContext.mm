@@ -123,16 +123,16 @@ static const auto kSentryDefaultSamplingDecision = kSentrySampleDecisionUndecide
 
 - (void)getThreadInfo
 {
-	// This method crashes currently with macOS 11
+    // This method crashes currently with macOS 11
 #if TARGET_OS_MAC && !TARGET_OS_IOS && !TARGET_OS_WATCH && !TARGET_OS_TV
-	// Check the operating system version first
-	NSOperatingSystemVersion osVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
-	NSInteger majorVersion = osVersion.majorVersion;
+    // Check the operating system version first
+    NSOperatingSystemVersion osVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+    NSInteger majorVersion = osVersion.majorVersion;
 
-	// Return without doing anything if the OS is macOS 11
-	if (majorVersion == 11) {
-		return;
-	}
+    // Return without doing anything if the OS is macOS 11
+    if (majorVersion == 11) {
+        return;
+    }
 #endif
 #if SENTRY_TARGET_PROFILING_SUPPORTED
     const auto threadID = sentry::profiling::ThreadHandle::current()->tid();
